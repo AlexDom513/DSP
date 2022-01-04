@@ -1,76 +1,50 @@
 #https://stackoverflow.com/questions/17466561/best-way-to-structure-a-tkinter-application
 #https://pythonprogramming.net/tkinter-depth-tutorial-making-actual-program/
-import numpy as np
+
+#note: perhaps different sections of the GUI could be formatted into a class, then the overall components could be rearranged, this
+#can be addressed in a later version of the synthesizer
 import Tkinter as tk
 from synthRunner import runner
+from time import sleep
 
-#here we construct our layout of all the different widgets
-class GUI(tk.Tk):
-#In our case, we're inheriting everything from the tk.Tk class. Think of it kind of like how you import modules to use them.
-#That's basically what's happening when you inherit, only at the local class level.
+#order: first we must have all of our functionality and processing, only then should we move forward with GUI design
 
-    def __init__(self, *args, **kwargs):
-        
-        tk.Tk.__init__(self, *args, **kwargs) #initialize the inherited class
-
-        # define container, which will be filled with a bunch of frames to be accessed later on
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand = True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
-        self.frames = {}
-        frame = StartPage(container, self)
-        self.frames[StartPage] = frame
-        frame.grid(row=0, column=0, sticky="nsew")
-        self.show_frame(StartPage)
-
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
-volume = 0.5     # range [0.0, 1.0]
+#local variables
+volume = 1     # range [0.0, 1.0]
 fs = 44100       # sampling rate, Hz, must be integer
-duration = 1.0   # in seconds, may be float
-freq = 440.0        # sine frequency, Hz, may be float
+freq = 440.0     # sine frequency, Hz, may be float
+duration = 2   # in seconds, may be float
 
-# generate samples, note conversion to float32 array
-samples = (np.sin(2*np.pi*np.arange(fs*duration)*freq/fs)).astype(np.float32)
-#https://www.kite.com/python/answers/how-to-modify-a-global-variable-inside-a-class-method-in-python
+#create the sound player object
+run = runner(volume, fs, freq, duration)
 
-#here we can start constructing individual widgets and their methods      
-class StartPage(tk.Frame):
+#idea is that we would first instantiate any necessary processing objects and then call their specific commands from the button
+def testCallBack():
+    freq = freqSlider.get()
+    run.convertFreq(freq)
+    run.generateSamples()
+    run.stream()
+#need 44100 samples for 1 second of audio
 
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self,parent)
-        label = tk.Label(self, text="Start Page")
-        label.pack(pady=10,padx=10)
 
+#idea instantiate all the basic tkinter objects and processing objects, execute, idea we could actually have a bunch of buttons for the different frequencies
+#maybe ill do separate versions of this project
+master = tk.Tk()
 
-        #volume = 0.5     # range [0.0, 1.0]
-        #fs = 44100       # sampling rate, Hz, must be integer
-        #duration = 1.0   # in seconds, may be float
-        #freq = 440.0        # sine frequency, Hz, may be float
+#we will use a slider to set the frequency value
+freqSlider = tk.Scale(master, from_=400, to=1000, orient=tk.HORIZONTAL)
+freqSlider.pack()
 
-        # generate samples, note conversion to float32 array
-        #samples = (np.sin(2*np.pi*np.arange(fs*duration)*freq/fs)).astype(np.float32)
+toggleButton = tk.Button(master, text='toggle sound', command=testCallBack)
+toggleButton.pack()
 
-        def print_value(val):
-            print(val)
-            global freq
-            freq = val
+sineButton = tk.Button(master, text='Sine')
+sineButton.pack()
+sawButton = tk.Button(master, text='Saw')
+sawButton.pack()
+triangleButton = tk.Button(master, text='Triangle')
+triangleButton.pack()
+noiseButton = tk.Button(master, text = 'Noise')
+noiseButton.pack()
 
-        slider = tk.Scale(self, from_ = 100, to = 1000, orient = tk.HORIZONTAL, command = print_value)
-        slider.pack()
-
-        #need to actually update the runner because the instantiation is has already been done once with the 440 Hz
-        #there is no actual way to change the parameter for frequency!!!!!
-        run = runner(volume, fs, duration, freq, samples)
-
-        #so this is actually pretty smart, we have our runner carry a stream method, then whenever we press the button we can actually play the sound!
-        #button could actually be an enable/disable feature
-        button = tk.Button(self, text="Visit Page 1", command=lambda: run.stream())
-        button.pack() 
-
-app = GUI()
-app.mainloop()
+master.mainloop()
