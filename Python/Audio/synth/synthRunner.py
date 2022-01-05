@@ -15,6 +15,8 @@ class runner:
         self.disp = []
         self.numSamples = None
         self.samples = None
+        self.samplesFFT = None
+        self.axisFFT = None
         self.repeat = None
         self.player = pyaudio.PyAudio()
 
@@ -23,12 +25,26 @@ class runner:
         self.numSamples = np.round(self.fs / self.freq)
         self.repeat = np.ceil((1 + self.fs / self.numSamples) * self.duration)
 
+    def fft(self, data):
+        window = np.hamming(len(data))
+        freq = abs(np.fft.fft(data)) * window * 1e6
+        n = len(freq)
+        half = int(n/2)
+        freqs = np.fft.fftfreq(n, d=1.0/self.fs)
+        freq = freq[:half]
+        freqs = freqs[:half]
+        freq = freq[:2000]
+        freqs = freqs[:2000]
+        self.axisFFT = freqs
+        self.samplesFFT = freq
+
     def sine(self):
         num = self.numSamples
         n = np.linspace(0,num,num = num)
         x = np.sin(2*np.pi*n)
         x = x[:-1]
         samples = np.tile(x,self.repeat)
+        self.fft(samples)
         self.disp = samples
         self.samples = samples.astype(np.float32).tobytes()
 
@@ -37,6 +53,7 @@ class runner:
         n = np.linspace(0,num,num = num)
         n = n[:-1]
         samples = np.tile(n,self.repeat)
+        self.fft(samples)
         self.disp = samples
         self.samples = samples.astype(np.float32).tobytes()
 
@@ -50,6 +67,7 @@ class runner:
         n = np.concatenate((n1, n2), axis=0)
         n = n[:-1]
         samples = np.tile(n,self.repeat)
+        self.fft(samples)
         self.disp = samples
         self.samples = samples.astype(np.float32).tobytes()
 
@@ -58,6 +76,7 @@ class runner:
         x = np.random.randn(num)
         x = x[:-1]
         samples = np.tile(x,self.repeat)
+        self.fft(samples)
         self.disp = samples
         self.samples = samples.astype(np.float32).tobytes()
 
