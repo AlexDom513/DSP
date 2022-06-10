@@ -1,9 +1,11 @@
 import numpy as np
 from scipy import signal
+from reverb import verb
+
 
 #purpose of Oscillator class is to generate waveforms, generated waveforms can then be rendered by the synthesizer
 #each oscillator created will represent a different pitch, timbre, etc.
-class Oscillator():
+class Oscillator:
     
     def __init__(self, rate, n_chunk, freq, type, gain=0.1):
         self.rate = rate                            #sampling rate (typically 44100 Hz)
@@ -15,6 +17,7 @@ class Oscillator():
         self.offset = 0                             #offset between chunks
         self.period = n_chunk * rate                #signal period
         self.change_waveform(type)                  #specify if waveform is sine/saw
+        self.reverbModifier = verb()                #declare reverb object that we will use to modify our chunk
 
     def out(self):
         x =  np.arange(self.offset, self.offset + self.n_chunk)     #generate timesteps (offset, offset+chunk)
@@ -22,6 +25,7 @@ class Oscillator():
         self.offset += self.n_chunk                                 #update offset param
         if self.offset == self.period:
             self.offset = 0
+        chunk = self.reverbModifier.applyReverb(chunk)
         return chunk
     
     def is_run(self):

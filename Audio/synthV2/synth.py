@@ -1,12 +1,13 @@
 #https://www.wizard-notes.com/entry/dev/pyqt5-pyaudio-simple-synthesizer
 #https://github.com/Kurene/simple-synthesizer-with-pyqt5-pyaudio/blob/master/main.py
+#file responsible for processing inputs and returning an actual sound output
 
 import pyaudio
 import numpy as np
 import threading
 from synth_modules import Oscillator
 
-class Synthesizer():
+class Synthesizer:
     waveform = ["sin", "saw"]
     
     def __init__(self, rate=44100, n_chunk=1024):
